@@ -1,0 +1,169 @@
+
+
+set val(chan) Channel/WirelessChannel ;
+set val(prop) Propagation/TwoRayGround ;
+set val(ant) Antenna/OmniAntenna ;
+set val(ll) LL ;
+set val(ifq) Queue/DropTail/PriQueue ;
+set val(ifqlen) 50 ;
+set val(netif) Phy/WirelessPhy ;
+set val(mac) Mac/802_11 ;
+set val(nn) 7 ;
+set val(rp) DSR ;
+set val(x) 500 ;
+set val(y) 400 ;
+set val(stop) 150 ;  
+
+   
+
+
+set ns [new Simulator]  
+set nf [open out.nam w]
+$ns namtrace-all-wireless $nf 500 500
+set tf [open dsdv.tr w]
+$ns trace-all $tf
+
+set topo [new Topography]
+$topo load_flatgrid $val(x) $val(y)
+#Define a 'finish' procedure
+proc finish {} {
+	        global ns nf tf
+		  $ns flush-trace
+			        #Close the NAM trace file
+			        close $nf
+				        #Close the Trace file
+				        close $tf
+					        #Execute NAM on the trace file
+					        exec nam out.nam &
+						        exit 0
+						}
+
+create-god $val(nn)
+
+
+$ns node-config -adhocRouting $val(rp) \
+		-llType $val(ll) \
+		-macType $val(mac) \
+		-ifqType $val(ifq) \
+		-ifqLen $val(ifqlen) \
+		-antType $val(ant) \
+		-propType $val(prop) \
+		-phyType $val(netif) \
+		-channelType $val(chan) \
+		-topoInstance $topo \
+		-agentTrace ON \
+		-routerTrace ON \
+		-macTrace OFF \
+		-movementTrace ON \
+
+
+
+for {set i 0} {$i < $val(nn) } {incr i} {
+set node_($i) [$ns node]
+}
+
+$node_(0) set X_ 5.0
+$node_(0) set Y_ 5.0
+$node_(0) set Z_ 0.0
+$node_(1) set X_ 490.0
+$node_(1) set Y_ 285.0
+$node_(1) set Z_ 0.0
+$node_(2) set X_ 150.0
+$node_(2) set Y_ 240.0
+$node_(2) set Z_ 0.0
+$node_(3) set X_ 100.0
+$node_(3) set Y_ 150.0
+$node_(3) set Z_ 0.0
+$node_(4) set X_ 250.0
+$node_(4) set Y_ 340.0
+$node_(4) set Z_ 0.0
+$node_(5) set X_ 180.0
+$node_(5) set Y_ 250.0
+$node_(5) set Z_ 0.0
+$node_(6) set X_ 220.0
+$node_(6) set Y_ 380.0
+$node_(6) set Z_ 0.0
+
+
+
+
+$ns at 10.0 "$node_(0) setdest 250.0 250.0 3.0"
+$ns at 15.0 "$node_(1) setdest 45.0 285.0 5.0"
+$ns at 110.0 "$node_(0) setdest 480.0 300.0 5.0"
+$ns at 130.0 "$node_(1) setdest 400.0 200.0 3.0"
+
+
+
+set tcp [new Agent/TCP/Newreno]
+$tcp set class_ 2
+set sink [new Agent/TCPSink]
+$ns attach-agent $node_(0) $tcp
+$ns attach-agent $node_(1) $sink
+$ns connect $tcp $sink
+
+set tcp1 [new Agent/TCP/Newreno]
+$tcp set class_ 2
+$ns attach-agent $node_(1) $tcp1
+
+set tcp2 [new Agent/TCP/Newreno]
+$tcp set class_ 2
+$ns attach-agent $node_(2) $tcp2
+
+set tcp3 [new Agent/TCP/Newreno]
+$tcp set class_ 2
+$ns attach-agent $node_(3) $tcp3
+
+set tcp4 [new Agent/TCP/Newreno]
+$tcp set class_ 2
+$ns attach-agent $node_(4) $tcp4
+
+set tcp5 [new Agent/TCP/Newreno]
+$tcp set class_ 2
+$ns attach-agent $node_(5) $tcp5
+
+set tcp6 [new Agent/TCP/Newreno]
+$tcp set class_ 2
+$ns attach-agent $node_(6) $tcp6
+
+set sink1 [new Agent/TCPSink]
+$ns attach-agent $node_(2) $sink1
+
+set sink2 [new Agent/TCPSink]
+$ns attach-agent $node_(3) $sink2
+
+set sink3 [new Agent/TCPSink]
+$ns attach-agent $node_(4) $sink3
+
+set sink4 [new Agent/TCPSink]
+$ns attach-agent $node_(0) $sink4
+
+set sink5 [new Agent/TCPSink]
+$ns attach-agent $node_(5) $sink5
+
+set sink6 [new Agent/TCPSink]
+$ns attach-agent $node_(6) $sink6
+
+set ftp [new Application/FTP]
+$ftp attach-agent $tcp 
+$ns at 10.0 "$ftp start"
+
+for {set i 0} {$i < $val(nn) } {incr i} {
+
+$ns initial_node_pos $node_($i) 30
+
+}
+
+for {set i 0} {$i < $val(nn) } {incr i} {
+
+$ns at $val(stop) "$node_($i) reset";
+
+}
+
+
+$ns at $val(stop) "$ns nam-end-wireless $val(stop)"
+
+$ns at $val(stop) "finish"
+
+$ns at 150.01 "puts \"end simulation\" ;$ns halt"
+
+$ns run
