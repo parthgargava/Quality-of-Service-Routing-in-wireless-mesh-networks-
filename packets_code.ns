@@ -1,0 +1,221 @@
+BEGIN{
+
+ highest_packet_id = 0;
+recieved=0;
+dropped=0;
+
+}
+
+{
+
+
+ # Trace line format: new
+             action = $1
+             time = $2
+             node_id = $3
+             packet_id = $6
+             pktsize = $8
+             type = $7
+             level = $4
+	     seq_no = $6; 
+     
+
+if(action=="r"){recieved++;
+printf ("%f\t%d\n",time,recieved);}
+}
+
+END{
+}
+
+PACKETS DROPPED
+
+
+BEGIN{
+
+ highest_packet_id = 0;
+recieved=0;
+dropped=0;
+
+}
+
+{
+
+
+ # Trace line format: new
+             action = $1
+             time = $2
+             node_id = $3
+             packet_id = $6
+             pktsize = $8
+             type = $7
+             level = $4
+	     seq_no = $6; 
+     
+
+if(action=="D"){dropped++;
+printf ("%f\t%d\n",time,dropped);}	
+
+
+}
+
+END{
+
+}
+
+JITTER
+
+
+BEGIN{
+
+ highest_packet_id = 0;
+}
+
+{
+
+
+ # Trace line format: new
+             action = $1
+             time = $2
+             node_id = $3
+             packet_id = $6
+             pktsize = $8
+             type = $7
+             level = $4
+	     seq_no = $6; 
+     
+
+if( packet_id > highest_packet_id )
+ highest_packet_id = packet_id;
+
+if(start_time[packet_id] == 0){
+
+pkt_seqno[packet_id] = seq_no;
+start_time[packet_id] = time;
+}
+
+if(action != "d"){
+ if(action == "r")
+{
+ end_time[packet_id] = time;
+ }
+}else
+{
+
+ end_time[packet_id] = -1;
+}
+
+}
+
+END{
+
+last_seqno = 0;
+last_delay = 0;
+seqno_diff = 0;
+
+for(packet_id = 0; packet_id <= highest_packet_id; packet_id++){
+ start = start_time[packet_id];
+ end   = end_time[packet_id];
+ packet_duration = end - start;
+
+if(start < end) {
+
+seqno_diff = pkt_seqno[packet_id] - last_seqno;
+delay_diff = packet_duration - last_delay;
+if(seqno_diff == 0){
+ jitter = 0;
+}else{
+ jitter = delay_diff/seqno_diff;
+}
+printf("%f %f\n", start, jitter);
+last_seqno = pkt_seqno[packet_id];
+last_dekay = packet_duration;
+}
+
+}
+}
+THROUGHPUT
+
+BEGIN {
+        sent=0;
+	recv=0;
+}
+
+{
+
+   action = $1;
+   
+   if( action == "s"){
+   	 sent++;
+   }
+   if( action == "r"){
+ 	recv++;
+   }
+
+
+}                                                       
+
+END {
+     tput = recv/sent;
+     printf("\n  %d  %f",sent,tput);
+
+
+}
+
+
+
+DELAY
+
+BEGIN {
+
+numpackets = 1;
+
+p_delay=0;
+#minp_delay=2000;
+#maxp_delay=0;
+#indivdelay=0;
+}
+
+{
+
+action = $1;
+
+time = $3;
+
+packetid = $41;
+
+if ( packetid > numpackets )
+
+	numpackets = packetid;
+
+if ( start_time[packetid] == 0 ) 
+
+	start_time[packetid] = time;
+
+if (action != "d") 
+{
+
+	if ( action == "r") 
+	{
+
+		end_time[packetid] = time;
+		#printf("\n%f %f",packetid,end_time[packetid]-start_time[packetid]);
+		p_delay=p_delay+ end_time[packetid]-start_time[packetid];
+		#indivdelay=end_time[packetid]-start_time[packetid];
+		#if(indivdelay<minp_delay)
+		#	minp_delay=p_delay;
+		#if(indivdelay>maxp_delay)
+		#	maxp_delay=p_delay;
+
+	}
+
+} 
+else 
+{
+end_time[packetid] = -1;
+}
+
+printf("%f %f\n",time,(p_delay/numpackets));
+
+} 
+
+END {
