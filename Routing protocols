@@ -1,0 +1,66 @@
+1. AODV(Ad Hoc On Demand Distance Vector Protocol)
+
+In AODV each node maintains a routing table which is used to store destination and next hop IP addresses as well as destination sequence numbers. Each entry in the routing table has a destination address, next hop, precursor nodes list, lifetime, and distance to destination.
+
+To initiate a route discovery process a node creates a route request (RREQ) packet. The packet contains the source node’s IP address as well as the destination’s IP address. The RREQ contains a broadcast ID. The source node then broadcasts the packet and waits for a reply. When an intermediate node receives a RREQ, it checks to see if it has seen it before using the source and broadcast ID’s of the packet. When a node receives the RREQ, it determines if  indeed it is the indicated destination and, if not, if it has a route to respond to the RREQ. If either of those conditions is true, then it unicasts a route reply (RREP) message back to the source. If both conditions are false, i.e. if it does not have a route and it is not the indicated destination, it then broadcasts the packet to its neighbors. Ultimately, the destination node will always be able to respond to the RREQ message. When an intermediate node receives the RREP, it sets up a forward path entry to the destination in its routing table. This entry contains the IP address of the destination, the IP address of the neighbor from which the RREP arrived, and the hop count or distance to the destination. After processing the RREP packet, the node forwards it toward the source.
+ 
+			An Illustration of AODV Protocol
+ (RREQ) route request
+ (RREP) route reply packet
+
+
+Advantage:
+•	The main advantage of this protocol is that routes are established on demand and destination sequence numbers are used to find the latest route to destination. The connection setup delay is less.  
+
+Disadvantage: 
+•	One disadvantage is that intermediate nodes can lead to inconsistent routes if the source sequence number is very old and the intermediate nodes have a higher but not the latest destination sequence number, thereby having stale entries. Also multiple Route Request packets in response to a single Route Request packet can lead to heavy control overhead.
+
+
+
+2. DSDV  ( Destination Sequenced Distance Vector Protocol)
+
+DSDV is one of the most well known table-driven routing algorithms for MANETs. It is a distance vector protocol. In distance vector protocols, every node i maintains for each destination x a set of distances {dij(x)} for each node j that is a neighbor of i. Node i treats neighbor k as a next hop for a packet destined to x if dik(x) equals minj{dij(x)}. The succession of next hops chosen in this manner leads to x along the shortest path. In order to keep the distance estimates up to date, each node monitors the cost of its outgoing links and periodically broadcasts to all of its neighbors its current estimate of the shortest distance to every other node in the network. The distance vector which is periodically broadcasted contains one entry for each node in the network which includes the distance from the advertising node to the destination. The distance vector algorithm described above is a classical Distributed Bellman-Ford (DBF) algorithm.
+
+
+ 
+An Illustration of DSDV protocol
+
+
+
+Advantages: 
+•	DSDV was one of the early algorithms available. It is quite suitable for creating ad hoc networks with small number of nodes. 
+Disadvantages:
+•	DSDV requires a regular update of its routing tables, which uses up battery power and a small amount of bandwidth even when the network is idle.
+•	Whenever the topology of the network changes, a new sequence number is necessary before the network re-converges; thus, DSDV is not suitable for highly dynamic networks. 
+3. DSR ( Dynamic Source Routing Protocol)
+
+DSR uses source routing, which allows packet routing to be loop free. It increases its efficiency by allowing nodes that are either forwarding route discovery requests or overhearing packets through promiscuous listening mode to cache the routing information for future use.
+
+Source routing:
+Source routing is a technique whereby the sender of a packet can specify the route that a packet should take through the network.  The “source” makes some or all of these decisions.
+ 
+DSR is also on demand, which reduces the bandwidth use especially in situations where the mobility is low. It is a simple and efficient routing protocol for use in ad hoc networks. It has two important phases, route discovery and route maintenance.
+
+
+Route discovery:
+When some node S originates a new packet destined to some other node D, it places in the header of the packet a source route giving the sequence of hops that the packet should follow on its way to D. Normally, S will obtain a suitable source route by searching its Route Cache of routes previously learned, but if no route is found in its cache, it will initiate the Route Discovery protocol to dynamically find a new route to D. In this case, we call S the initiator and D the target of the Route Discovery.
+    
+
+
+ 
+
+
+
+Route maintenance:
+When originating or forwarding a packet using a source route,each node transmitting the packet is responsible for confirming that the packet has been received by the next hop along the source route; the packet is retransmitted (up to a maximum number of attempts) until this confirmation of receipt is received.
+
+ 
+
+The main algorithm works in the following manner. A node that desires communication with another node first searches its route cache to see if it already has a route to the destination. If it does not, it then initiates a route discovery mechanism. This is done by sending a Route Request message. When the node gets this route request message, it searches its own cache to see if it has a route to the destination. If it does not, it then appends its id to the packet and forwards the packet to the next node; this continues until either a node with a route to the destination is encountered (i.e. has a route in its own cache) or the destination receives the packet. In that case, the node sends a route reply packet which has a list of all of the nodes that forwarded the packet to reach the destination. This constitutes the routing information needed by the source, which can then send its data packets to the destination using this newly discovered route.
+Advantage: 
+•	This protocol used a reactive approach which eliminates the need to periodically flood the network with table update messages which are in table-driven approach.
+•	 The intermediate nodes also utilize the route cache information efficiently to reduce the control overhead.
+     
+ Disadvantage: 
+•	The route maintenance mechanism does not locally repair a broken link.
+•	 Stale route cache information could also result in inconsistencies during the route reconstruction phase.
